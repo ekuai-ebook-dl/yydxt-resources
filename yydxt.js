@@ -44,7 +44,7 @@ let main = async function () {
 			let attachment = await getURL("http://app.yiyaodxt.com/qcloud/api/v1/resourceFile/resource/" + json[j].attachmentId);
 			attachment = JSON.parse(attachment);
 			attachment = attachment.body.qcResourceFile;
-			ret += json[j].attachmentName + "|http://app.yiyaodxt.com/qcloud/api/v1/resourceFile/resource/" + attachment.filePath + "\r\n";
+			ret += json[j].attachmentName + "|http://file.yiyaoxt.com" + attachment.filePath + "\r\n";
 		}
 	}
 	return Promise.resolve(ret);
