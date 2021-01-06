@@ -1,10 +1,25 @@
 let config = {
 	contentId: "4310622109",
-	renderQuestion(question, index, choice) {
+	dev:1,//0:关闭;1:只输出第一章;2:只输出第一章第一节
+	renderFile(fileName, data) {
+		return`<!DOCTYPE html>
+		<html lang="zh">
+			<head>
+				<meta charset="UTF-8">
+				<title>${fileName}</title>
+			</head>
+			<body>
+				<div>${fileName}</div><hr/>
+				<div>${data}</div>
+			</body>
+		</html>`;
+	},
+	renderQuestion(question, index) {
+		let choiceDat=this.renderChoice(question)
 		return `<div>
-			<div>${index}.${question.content.title}</div>
+			<div>${index+1}.${question.content.title}</div>
 			<div>
-				${choice}
+				${choiceDat}
 			</div>
 			<div>
 				答案：${question.answer}
@@ -15,10 +30,43 @@ let config = {
 			<div>
 				知识点：${question.pointName}
 			</div>
-		</div>`;
+		</div><hr/>`;
 	},
-	renderChoice(choice, questionType) {
-
+	renderChoice(question) {
+		let choices = question.content.choiceList
+		let questionType=question.questionTypeId;
+		let ret='';
+		switch(questionType){
+			case 1://单选
+				ret+='单选题';
+				for(key in choices){
+					ret+=`<br/><input type="radio" name="${question.questionId}" value="${key}"/>${key}:`+parseDomText(choices[key]);
+				}
+				break;
+			case 2://多选
+				ret+='多选题';
+				for(key in choices){
+					ret+=`<br/><input type="checkbox" name="${question.questionId}" value="${key}"/>${key}:`+parseDomText(choices[key]);
+				}
+				break;
+			case 3://判断
+				ret=`判断题<br/><input type="radio" name="${question.questionId}" value="T:正确">T:正确<br/><input type="radio" name="${question.questionId}" value="F:错误">F:错误`
+				break;
+			case 4://填空
+				ret=`填空题`
+				break;
+			case 5://问答(填空)
+				ret=`问答题`
+				break;
+			case 8://名词解释(填空)
+				ret=`名词解释`
+				break;
+			default:
+				console.error("unexpected question type",questionType);
+				ret="unexpected question type"+questionType;
+				break;
+		}
+		return ret;
 	},
 };//在此修改配置
 
@@ -49,33 +97,28 @@ function postURL(URL, params) {
 	});
 }
 
-function sleep(ms) {
-	return new Promise(function (resolve) {
-		setTimeout(() => {
-			resolve();
-		}, ms);
-	});
-}
-
 function parseDom(arg) {
 	let objE = document.createElement("div");
 	objE.innerHTML = arg;
 	return objE.childNodes;
 }
 
-function renderFile(fileName, data) {
-	let content = `<!DOCTYPE html>
-	<html lang="zh">
-		<head>
-			<meta charset="UTF-8">
-			<title>${fileName}</title>
-		</head>
-		<body>
-			<div>${data}</div>
-		</body>
-	</html>
-`;
-	saveFile(fileName + ".html", content);
+function parseDomText(arg) {
+	let objE = document.createElement("div");
+	objE.innerHTML = arg;
+	return objE.innerText;
+}
+
+function processImageUrl(data){
+	let objE = document.createElement("div");
+	objE.innerHTML = data;
+	let imgList=objE.querySelectorAll("img")
+	for(let i=0;i<imgList.length;i++){
+		imgList[i].src=''+imgList[i].src
+	}
+	console.log(imgList)
+	console.log(objE)
+	return objE.innerHTML;
 }
 
 let getChapterPractice = async function (chapterId) {
@@ -88,23 +131,25 @@ let getChapterPractice = async function (chapterId) {
 		chapter = JSON.parse(chapter.body.content);
 		questions = questions.concat(chapter);
 		console.log(chapterId, currentPage, questions.length, num, questions);
+		if(config.dev>=2){
+			break;
+		}
 	} while (questions.length < num);
 	return questions;
 };
 
 let outputChapter = async function (chapter) {
 	let questions = await getChapterPractice(chapter.id);
+	let chapterName=chapter.querySelector(".train_name").innerHTML
 	let data = "";
 	for (let i = 0; i < questions.length; i++) {
 		let question = questions[i];
 		question.content = JSON.parse(question.content);
-		let choice = "";
-		for (let j = 0; j < question.content.choiceList.length; j++) {
-
-		}
-		data += config.renderQuestion(question, i, choice);
+		data += config.renderQuestion(question, i);
 	}
-	console.log(chapter, questions);
+	data=processImageUrl(data);
+	saveFile(chapterName + ".html", config.renderFile(chapterName,data));
+	console.log(chapterName, questions);
 };
 
 let main = async function () {
@@ -113,13 +158,15 @@ let main = async function () {
 	fragment = fragment[1].querySelector(".train_box").children;
 	console.log(fragment);
 	for (let i = 0; i < fragment.length; i++) {
-		outputChapter(fragment[i]).then(() => {
-			console.log(`thread ${i} started`);
+		outputChapter(fragment[i],).then(() => {
+			console.log(`thread ${i} finished`);
 		});
+		if(config.dev>=1){
+			break;
+		}
 	}
-
 	return Promise.resolve();
 };
 main().then(() => {
-	console.log("main thread finished");
+	console.log("main thread finished, please wait...");
 });
