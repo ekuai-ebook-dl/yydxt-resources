@@ -1,8 +1,8 @@
 let config = {
 	contentId: "4310622109",
-	dev:1,//0:关闭;1:只输出第一章;2:只输出第一章第一节
+	dev: 0,//0:关闭;1:只输出第一章;2:只输出第一章第一节
 	renderFile(fileName, data) {
-		return`<!DOCTYPE html>
+		return `<!DOCTYPE html>
 		<html lang="zh">
 			<head>
 				<meta charset="UTF-8">
@@ -15,9 +15,9 @@ let config = {
 		</html>`;
 	},
 	renderQuestion(question, index) {
-		let choiceDat=this.renderChoice(question)
+		let choiceDat = this.renderChoice(question);
 		return `<div>
-			<div>${index+1}.${question.content.title}</div>
+			<div>${index + 1}.${question.content.title}</div>
 			<div>
 				${choiceDat}
 			</div>
@@ -33,37 +33,38 @@ let config = {
 		</div><hr/>`;
 	},
 	renderChoice(question) {
-		let choices = question.content.choiceList
-		let questionType=question.questionTypeId;
-		let ret='';
-		switch(questionType){
+		let choices = question.content.choiceList;
+		let questionType = question.questionTypeId;
+		let ret = "";
+		switch (questionType) {
 			case 1://单选
-				ret+='单选题';
-				for(key in choices){
-					ret+=`<br/><input type="radio" name="${question.questionId}" value="${key}"/>${key}:`+parseDomText(choices[key]);
+				ret += "单选题";
+				for (let key in choices) {
+					ret += `<br/><input type="radio" name="${question.questionId}" value="${key}"/>${key}:` + parseDomText(choices[key]);
 				}
 				break;
 			case 2://多选
-				ret+='多选题';
-				for(key in choices){
-					ret+=`<br/><input type="checkbox" name="${question.questionId}" value="${key}"/>${key}:`+parseDomText(choices[key]);
+				ret += "多选题";
+				for (let key in choices) {
+					ret += `<br/><input type="checkbox" name="${question.questionId}" value="${key}"/>${key}:` + parseDomText(choices[key]);
 				}
 				break;
 			case 3://判断
-				ret=`判断题<br/><input type="radio" name="${question.questionId}" value="T:正确">T:正确<br/><input type="radio" name="${question.questionId}" value="F:错误">F:错误`
+				ret = `判断题<br/><input type="radio" name="${question.questionId}" value="T:正确">T:正确<br/>
+								<input type="radio" name="${question.questionId}" value="F:错误">F:错误`;
 				break;
 			case 4://填空
-				ret=`填空题`
+				ret = `填空题`;
 				break;
 			case 5://问答(填空)
-				ret=`问答题`
+				ret = `问答题`;
 				break;
 			case 8://名词解释(填空)
-				ret=`名词解释`
+				ret = `名词解释`;
 				break;
 			default:
-				console.error("unexpected question type",questionType);
-				ret="unexpected question type"+questionType;
+				console.error("unexpected question type", questionType, question);
+				ret = "unexpected question type" + questionType;
 				break;
 		}
 		return ret;
@@ -109,15 +110,14 @@ function parseDomText(arg) {
 	return objE.innerText;
 }
 
-function processImageUrl(data){
+function processImageUrl(data) {
 	let objE = document.createElement("div");
 	objE.innerHTML = data;
-	let imgList=objE.querySelectorAll("img")
-	for(let i=0;i<imgList.length;i++){
-		imgList[i].src=''+imgList[i].src
+	let imgList = objE.querySelectorAll("img");
+	for (let i = 0; i < imgList.length; i++) {
+		imgList[i].src = "" + imgList[i].src;
 	}
-	console.log(imgList)
-	console.log(objE)
+	console.log("output document", objE);
 	return objE.innerHTML;
 }
 
@@ -131,7 +131,7 @@ let getChapterPractice = async function (chapterId) {
 		chapter = JSON.parse(chapter.body.content);
 		questions = questions.concat(chapter);
 		console.log(chapterId, currentPage, questions.length, num, questions);
-		if(config.dev>=2){
+		if (config.dev >= 2) {
 			break;
 		}
 	} while (questions.length < num);
@@ -140,15 +140,15 @@ let getChapterPractice = async function (chapterId) {
 
 let outputChapter = async function (chapter) {
 	let questions = await getChapterPractice(chapter.id);
-	let chapterName=chapter.querySelector(".train_name").innerHTML
+	let chapterName = chapter.querySelector(".train_name").innerHTML;
 	let data = "";
 	for (let i = 0; i < questions.length; i++) {
 		let question = questions[i];
 		question.content = JSON.parse(question.content);
 		data += config.renderQuestion(question, i);
 	}
-	data=processImageUrl(data);
-	saveFile(chapterName + ".html", config.renderFile(chapterName,data));
+	data = processImageUrl(data);
+	saveFile(chapterName + ".html", config.renderFile(chapterName, data));
 	console.log(chapterName, questions);
 };
 
@@ -158,10 +158,10 @@ let main = async function () {
 	fragment = fragment[1].querySelector(".train_box").children;
 	console.log(fragment);
 	for (let i = 0; i < fragment.length; i++) {
-		outputChapter(fragment[i],).then(() => {
+		outputChapter(fragment[i]).then(() => {
 			console.log(`thread ${i} finished`);
 		});
-		if(config.dev>=1){
+		if (config.dev >= 1) {
 			break;
 		}
 	}
