@@ -1,5 +1,5 @@
 let config = {
-	contentId: "4310622109",
+	contentId: "4310622166",
 	dev: 0,//0:关闭;1:只输出第一章;2:只输出第一章第一节
 	renderFile(fileName, data) {
 		return `<!DOCTYPE html>
@@ -126,6 +126,7 @@ let getChapterPractice = async function (chapterId) {
 	do {
 		currentPage++;
 		let chapter = await postURL("http://www.yiyaodxt.com/qcloud/feildSubject.jspx", `chapterId=${chapterId}&pageNo=${currentPage}`);
+		chapter = chapter ? chapter : "[]";
 		chapter = JSON.parse(chapter);
 		num = chapter.body.size;
 		chapter = JSON.parse(chapter.body.content);
