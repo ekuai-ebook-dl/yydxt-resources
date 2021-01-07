@@ -126,10 +126,10 @@ let getChapterPractice = async function (chapterId) {
 	do {
 		currentPage++;
 		let chapter = await postURL("http://www.yiyaodxt.com/qcloud/feildSubject.jspx", `chapterId=${chapterId}&pageNo=${currentPage}`);
-		chapter = chapter ? chapter : "[]";
 		chapter = JSON.parse(chapter);
 		num = chapter.body.size;
-		chapter = JSON.parse(chapter.body.content);
+		chapter = chapter.body.content ? chapter.body.content : "[]";
+		chapter = JSON.parse(chapter);
 		questions = questions.concat(chapter);
 		console.log(chapterId, currentPage, questions.length, num, questions);
 		if (config.dev >= 2) {
@@ -140,17 +140,22 @@ let getChapterPractice = async function (chapterId) {
 };
 
 let outputChapter = async function (chapter) {
-	let questions = await getChapterPractice(chapter.id);
+	let chapterId = chapter.id;
+	let questions = await getChapterPractice(chapterId);
 	let chapterName = chapter.querySelector(".train_name").innerHTML;
 	let data = "";
-	for (let i = 0; i < questions.length; i++) {
-		let question = questions[i];
-		question.content = JSON.parse(question.content);
-		data += config.renderQuestion(question, i);
+	if (!questions.length) {
+		console.warn("empty chapter", chapterName, chapterId, questions);
+	} else {
+		for (let i = 0; i < questions.length; i++) {
+			let question = questions[i];
+			question.content = JSON.parse(question.content);
+			data += config.renderQuestion(question, i);
+		}
+		data = processImageUrl(data);
+		saveFile(chapterName + ".html", config.renderFile(chapterName, data));
+		console.log(chapterName, chapterId, questions);
 	}
-	data = processImageUrl(data);
-	saveFile(chapterName + ".html", config.renderFile(chapterName, data));
-	console.log(chapterName, questions);
 };
 
 let main = async function () {
