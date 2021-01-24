@@ -59,7 +59,15 @@ let config = {
 			case 5://问答(填空)
 				ret = `问答题`;
 				break;
-			case 7://名词解释(填空)
+			case 6://大题(未知)
+				ret = `大题<br/>`;
+				for (let i = 0; i < question.children.length; i++) {
+					let q = question.children[i];
+					q.content = JSON.parse(q.content);
+					ret += this.renderQuestion(q, i);
+				}
+				break;
+			case 7://大题(未知)
 				ret = `大题<br/>`;
 				for (let i = 0; i < question.children.length; i++) {
 					let q = question.children[i];
