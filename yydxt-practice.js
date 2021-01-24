@@ -1,5 +1,5 @@
 let config = {
-	contentId: "4310622166",
+	contentId: "4310622163",
 	dev: 0,//0:关闭;1:只输出第一章;2:只输出第一章第一节
 	renderFile(fileName, data) {
 		return `<!DOCTYPE html>
@@ -22,13 +22,13 @@ let config = {
 				${choiceDat}
 			</div>
 			<div>
-				答案：${question.answer}
+				答案：${question.answer ? question.answer : "无"}
 			</div>
 			<div>
-				来源：${question.fieldName}
+				来源：${question.fieldName ? question.fieldName : "无"}
 			</div>
 			<div>
-				知识点：${question.pointName}
+				知识点：${question.pointName ? question.pointName : "无"}
 			</div>
 		</div><hr/>`;
 	},
@@ -58,6 +58,14 @@ let config = {
 				break;
 			case 5://问答(填空)
 				ret = `问答题`;
+				break;
+			case 7://名词解释(填空)
+				ret = `大题<br/>`;
+				for (let i = 0; i < question.children.length; i++) {
+					let q = question.children[i];
+					q.content = JSON.parse(q.content);
+					ret += this.renderQuestion(q, i);
+				}
 				break;
 			case 8://名词解释(填空)
 				ret = `名词解释`;
